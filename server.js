@@ -18,14 +18,15 @@ const abi = [
 
 const contract = new ethers.Contract(contractAddress, abi, signer);
 
-// 🚀 Register Image Hash
+//Register Image Hash
 app.post("/register", async (req, res) => {
     try {
         const { imageHash } = req.body;
         if (!imageHash) return res.status(400).json({ error: "Image hash required" });
 
-        //const paddedhash = ethers.utils(imageHash, 32);
-        const tx = await contract.registerImage(toUtf8Bytes(imageHash));
+        // Convert the hash to bytes32 format
+        const paddedHash = zeroPadValue("0x"+imageHash, 32);
+        const tx = await contract.registerImage(paddedHash);
         await tx.wait();
 
         res.json({ message: "Image hash registered successfully", txHash: tx.hash });
@@ -35,12 +36,13 @@ app.post("/register", async (req, res) => {
     }
 });
 
-// 🔍 Check Image Authenticity
+//Check Image Authenticity
 app.get("/check/:hash", async (req, res) => {
     try {
         const { hash } = req.params;
-        const exists = await contract.isImageAuthentic(hash);
-        res.json({ exists });
+        const paddedHash = zeroPadValue("0x"+hash, 32);
+        const exists = await contract.isImageAuthentic(paddedHash);
+        res.json({ exists: exists });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Error checking image authenticity" });
